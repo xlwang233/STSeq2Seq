@@ -1,0 +1,63 @@
+{
+    "name": "METR-LA_STSeq2Seq",
+    "device": "cuda:0",
+    "dataset": {
+        "name": "METR-LA",
+        "graph_file": "data/adj_mx.pkl",
+        "dataset_dir": "data/METR-LA"
+    },
+    "arch": {
+        "type": "STSeq2Seq",
+        "args": {
+			"batch_size": 64,
+			"dec_input_dim": 1,
+            "seq_len": 12,
+            "num_nodes": 207,
+            "kt": 3,
+            "blocks": [[2, 64, 64], [64, 64, 64]],
+			"max_diffusion_step": 1,
+			"rnn_units": 64,
+			"output_dim": 1,
+            "attention_type": "multiplicative",
+            "filter_type": "dual_random_walk",
+            "adpt_type": "pam"
+		}
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args":{
+            "lr": 0.01,
+            "weight_decay": 0,
+			"eps": 1.0e-4,
+            "amsgrad": true
+        }
+    },
+    "loss": {
+		"type": "masked_mae_loss",
+		"args":{
+			"null_val": 0.0
+		}
+	},
+    "metrics": [
+        "masked_mae_np", "masked_mape_np", "masked_rmse_np"
+    ],
+    "lr_scheduler": {
+        "type": "MultiStepLR",
+        "args": {
+			"milestones": [5, 10, 20, 40, 70],
+            "gamma": 0.5
+        }
+    },
+    "trainer": {
+        "epochs": 100,
+		"cl_decay_steps": 2000,
+        "save_dir": "saved/",
+        "save_period": 1,
+        "verbosity": 2,
+        "max_grad_norm": 5,
+        "monitor": "min val_loss",
+        "early_stop": 30,
+        "log_steps": 80,
+        "tensorboard": true
+    }
+}
