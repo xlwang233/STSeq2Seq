@@ -1,6 +1,6 @@
 # Spatial-Temporal Sequence to Sequence Model for Traffic Forecasting
 
-A PyTorch implementation of *Spatial-Temporal Sequence to Sequence* model in the paper:  Forecast Network-Wide Traffic States for Multiple Steps Ahead: A Deep Learning Approach Considering Dynamic Non-Local Spatial Correlation and Non-Stationary Temporal Dependency (https://arxiv.org/abs/2004.02391).
+A PyTorch implementation of *Spatial-Temporal Sequence to Sequence* model in the paper:  Forecast Network-Wide Traffic States for Multiple Steps Ahead: A Deep Learning Approach Considering Dynamic Non-Local Spatial Correlation and Non-Stationary Temporal Dependency (preprint: https://arxiv.org/abs/2004.02391; journal article: https://doi.org/10.1016/j.trc.2020.102763).
 
 ## Requirements
 - pytorch >= 1.2.0
@@ -87,6 +87,21 @@ Note that ARIMA and SVR are fitted independently on each sensor, thus would prob
 - consider using parallel and distributed computing tools (e.g. Apache Spark, which I have not tested its feasibility, though) or 
 - use simpler models (e.g. use LinearSVR instead of SVR). 
 
+## Citation
 
+This method has been published as a journal paper. If you find this repo useful for your research, please consider citing the following paper:
+
+```bash
+@article{wang2020forecast,
+  title={Forecast network-wide traffic states for multiple steps ahead: A deep learning approach considering dynamic non-local spatial correlation and non-stationary temporal dependency},
+  author={Wang, Xinglei and Guan, Xuefeng and Cao, Jun and Zhang, Na and Wu, Huayi},
+  journal={Transportation research part C: emerging technologies},
+  volume={119},
+  pages={102763},
+  year={2020},
+  publisher={Elsevier}
+}
+
+```
 
  
