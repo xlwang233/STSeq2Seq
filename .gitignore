@@ -103,6 +103,7 @@ ENV/
 # input data, saved log, checkpoints
 data/METR-LA
 data/PEMS-BAY
+data/
 input/
 saved/
 datasets/
