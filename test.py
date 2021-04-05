@@ -66,6 +66,7 @@ def main(config):
     y_truths = data['y_test']
     predictions = []
     groundtruth = list()
+    temporal_attn = torch.FloatTensor([])
 
     test_start_time = time.time()
     with torch.no_grad():
@@ -73,14 +74,16 @@ def main(config):
             x = torch.FloatTensor(x).to(device)
             y = torch.FloatTensor(y).to(device)
             if model_type == "seq2seq":
-                outputs = model(supports, x, y, 0)  # (seq_length, batch_size, num_nodes*output_dim)  (12, 50, 207*1)
+                outputs, a = model(supports, x, y, 0)  # (seq_length, batch_size, num_nodes*output_dim)  (12, 50, 207*1)
                 y_preds = torch.cat([y_preds, outputs.squeeze().cpu()], dim=1)
+                temporal_attn = torch.cat([temporal_attn, a.cpu()], dim=0)
             elif model_type == "fnn":
                 outputs = model(x)
                 outputs = torch.transpose(outputs, 0, 1)
                 y_preds = torch.cat([y_preds, outputs.cpu()], dim=1)
     y_preds = torch.transpose(y_preds, 0, 1)
     y_preds = y_preds.detach().numpy()  # cast to numpy array
+    temporal_attn = temporal_attn.detach().numpy()
     inference_time = time.time() - test_start_time
     print("Inference Time: {:.4f}s".format(inference_time))
     print("--------test results--------")
@@ -122,6 +125,9 @@ def main(config):
     # }
     # np.savez_compressed('saved/results/METR-LAres.npz', **outputs)
     # print('Predictions saved as {}.'.format('saved/results/METR-LAres.npz'))
+
+    # serialize temporal attention
+    np.save('saved/results/METR-LA_temporal_attn.npy', temporal_attn)
 
 
 if __name__ == '__main__':

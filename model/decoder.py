@@ -100,25 +100,28 @@ class MultiplicativeAttention(nn.Module):
         but somehow it is actually [batch_size*time_step, num_nodes*enc_hid_dim]
         :return: attention vector, [batch size, src len]
         """
-        q = self.W_q(dec_hidden)
-        k = self.W_k(encoder_outputs)
-        # v = self.W_v(encoder_outputs)
-        # q = dec_hidden
-        # k = encoder_outputs
-        batch_size, time_step, num_nodes, _ = encoder_outputs.shape
+        q = dec_hidden
+        k = v = encoder_outputs
+        batch_size, time_step, n_route, _ = encoder_outputs.shape
 
-        q = torch.reshape(q, [batch_size, -1]).unsqueeze(1)  # reshape to (64, 1, 207*32)
-        k = v = torch.transpose(torch.reshape(k, [batch_size, time_step, -1]), 1, 2)
-        v = torch.reshape(v, [batch_size, time_step, -1])
-        # reshape to (50, 12, 207*hid_dim) and transpose to (64, 207*hid_dim, 12)
+        # Compute attention for each single node
+        q = torch.reshape(q, [batch_size * n_route, -1]).unsqueeze(1)  # [64*207, 1, 4]
+        # k = torch.transpose(k, 1, 2)
+        # k = torch.transpose(k, 2, 3)
+        k = k.permute([0, 2, 3, 1])
+        k = torch.reshape(k, [batch_size * n_route, -1, time_step])  # [64*207, 4, 12]
+        v = torch.transpose(v, 1, 2).reshape([batch_size * n_route, time_step, -1])  # (64*207, 12, 4)
+        # print("q shape: ", q.shape)
+        # print("k shape: ", k.shape)
+        # print("v shape: ", v.shape)
 
         energy = torch.matmul(q, k) / self.scale
-        # energy = [batch size, trg len, src len]  (50, 1, 12)
+        # 单个node的情况： (64*207, 1, 12)
 
-        attention = F.softmax(energy, dim=-1)
-        # attention = [batch_size, trg_len=1, src_len]
+        attention = F.softmax(energy, dim=-1)  # (64*207, 1, 12)
         weighted = torch.bmm(attention, v)
-        # [batch_size, trg_len=1, src_len] * [batch_size, src_len, n_route*hidden_size]
+        # [batch_size*n_route, trg_len=1, src_len] * [batch_size*n_route, src_len, hidden_size]
+        # = (64*207, 1, 4)
 
         return attention, weighted
 
@@ -247,20 +250,23 @@ class Decoder(nn.Module):
 
         current_input = inputs[0]  # the first input to the rnn is Start Symbol
         hidden_state = initial_hidden_state  # [batch_size, num_nodes, dec_hid_dim]
+        temporal_attn = torch.FloatTensor([]).cuda()
 
         for t in range(1, seq_length):
             current_input = torch.reshape(current_input, [batch_size, num_nodes, -1])
             if self.attention is not None:
                 a, weighted = self.attention(hidden_state, encoder_outputs)  # [batch_size, 1, src len]
-                weighted = torch.reshape(weighted.squeeze(1), [batch_size, num_nodes, -1])
+                a = torch.reshape(a, [batch_size, num_nodes, 1, -1])
+                weighted = torch.reshape(weighted.squeeze(), [batch_size, num_nodes, -1])
                 rnn_input = torch.cat((current_input, weighted), dim=2)  # (batch_size, num_nodes, in_dim+dec_dim)
+                temporal_attn = torch.cat([temporal_attn, a], dim=2)
             else:
                 rnn_input = current_input
             output, hidden_state = self.decoding_cell(supports, rnn_input, hidden_state)
             outputs[t] = output  # (batch_size, num_nodes*out_dim)
             teacher_force = random.random() < teacher_forcing_ratio  # a bool value
             current_input = (inputs[t] if teacher_force else output)
-        return outputs[1:, ...]
+        return outputs[1:, ...], temporal_attn
 
 
 # GRUDecoder

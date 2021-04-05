@@ -34,9 +34,9 @@ class STSeq2Seq(nn.Module):
 
         encoder_outputs, hidden = self.encoder(supports, source)
 
-        outputs = self.decoder(supports=supports, inputs=target, initial_hidden_state=hidden,
+        outputs, temporal_attn = self.decoder(supports=supports, inputs=target, initial_hidden_state=hidden,
                                encoder_outputs=encoder_outputs, teacher_forcing_ratio=teacher_forcing_ratio)
-        return outputs  # (seq_length, batch_size, num_nodes*output_dim)  (12, 64, 207*1)
+        return outputs, temporal_attn  # (seq_length, batch_size, num_nodes*output_dim)  (12, 64, 207*1)
 
 
 # GRU

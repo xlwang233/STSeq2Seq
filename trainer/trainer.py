@@ -68,7 +68,7 @@ class Trainer(BaseTrainer):
             teacher_forcing_ratio = self._compute_sampling_threshold(global_step, self.cl_decay_steps)
 
             if self.model_type == "seq2seq":
-                output = self.model(self.supports, data, target, teacher_forcing_ratio)
+                output, _ = self.model(self.supports, data, target, teacher_forcing_ratio)
                 output = torch.transpose(output.view(output.size(0), self.model.batch_size, self.model.num_nodes,
                                          self.model.output_dim), 0, 1)  # back to (60, 12, 207, 1)
             elif self.model_type == "fnn":
@@ -132,7 +132,7 @@ class Trainer(BaseTrainer):
                 data, target = data.to(self.device), target.to(self.device)
 
                 if self.model_type == "seq2seq":
-                    output = self.model(self.supports, data, target, 0)
+                    output, _ = self.model(self.supports, data, target, 0)
                     output = torch.transpose(output.view(output.size(0), self.model.batch_size, self.model.num_nodes,
                                                          self.model.output_dim), 0, 1)  # back to (50, 12, 207, 1)
                 elif self.model_type == "fnn":
